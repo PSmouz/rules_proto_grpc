@@ -16,3 +16,5 @@ local_path_override(
     module_name = "rules_proto_grpc_rust",
     path = "../../../modules/rust",
 )
+
+bazel_dep(name = "rules_rust", version = "0.69.0")

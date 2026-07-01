@@ -1,0 +1,113 @@
+load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_proto_library(
+    name = "type_rust_proto",
+    crate_name = "google_type",
+    declared_proto_packages = ["google.type"],
+    protos = [
+        "@googleapis//google/type:calendar_period_proto",
+        "@googleapis//google/type:color_proto",
+        "@googleapis//google/type:date_proto",
+        "@googleapis//google/type:datetime_proto",
+        "@googleapis//google/type:dayofweek_proto",
+        "@googleapis//google/type:decimal_proto",
+        "@googleapis//google/type:expr_proto",
+        "@googleapis//google/type:fraction_proto",
+        "@googleapis//google/type:interval_proto",
+        "@googleapis//google/type:latlng_proto",
+        "@googleapis//google/type:localized_text_proto",
+        "@googleapis//google/type:money_proto",
+        "@googleapis//google/type:month_proto",
+        "@googleapis//google/type:phone_number_proto",
+        "@googleapis//google/type:postal_address_proto",
+        "@googleapis//google/type:quaternion_proto",
+        "@googleapis//google/type:timeofday_proto",
+    ],
+)
+
+alias(
+    name = "calendar_period_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "color_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "date_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "datetime_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "dayofweek_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "decimal_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "expr_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "fraction_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "interval_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "latlng_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "localized_text_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "money_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "month_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "phone_number_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "postal_address_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "quaternion_rust_proto",
+    actual = ":type_rust_proto",
+)
+
+alias(
+    name = "timeofday_rust_proto",
+    actual = ":type_rust_proto",
+)

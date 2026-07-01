@@ -62,6 +62,19 @@ proto_library(
 )
 
 proto_library(
+    name = "session_proto",
+    srcs = ["session.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@googleapis//google/api:field_behavior_proto",
+        "@googleapis//google/api:resource_proto",
+        "@googleapis//google/type:latlng_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
+
+proto_library(
     name = "greeter_grpc",
     srcs = [
         "greeter.proto",

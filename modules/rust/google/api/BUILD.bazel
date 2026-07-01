@@ -1,0 +1,213 @@
+load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_proto_library(
+    name = "api_rust_proto",
+    crate_name = "google_api",
+    declared_proto_packages = ["google.api"],
+    protos = [
+        "@googleapis//google/api:annotations_proto",
+        "@googleapis//google/api:auth_proto",
+        "@googleapis//google/api:backend_proto",
+        "@googleapis//google/api:billing_proto",
+        "@googleapis//google/api:client_proto",
+        "@googleapis//google/api:config_change_proto",
+        "@googleapis//google/api:consumer_proto",
+        "@googleapis//google/api:context_proto",
+        "@googleapis//google/api:control_proto",
+        "@googleapis//google/api:distribution_proto",
+        "@googleapis//google/api:documentation_proto",
+        "@googleapis//google/api:endpoint_proto",
+        "@googleapis//google/api:error_reason_proto",
+        "@googleapis//google/api:field_behavior_proto",
+        "@googleapis//google/api:field_info_proto",
+        "@googleapis//google/api:http_proto",
+        "@googleapis//google/api:httpbody_proto",
+        "@googleapis//google/api:label_proto",
+        "@googleapis//google/api:launch_stage_proto",
+        "@googleapis//google/api:log_proto",
+        "@googleapis//google/api:logging_proto",
+        "@googleapis//google/api:metric_proto",
+        "@googleapis//google/api:monitored_resource_proto",
+        "@googleapis//google/api:monitoring_proto",
+        "@googleapis//google/api:policy_proto",
+        "@googleapis//google/api:quota_proto",
+        "@googleapis//google/api:resource_proto",
+        "@googleapis//google/api:routing_proto",
+        "@googleapis//google/api:service_proto",
+        "@googleapis//google/api:source_info_proto",
+        "@googleapis//google/api:system_parameter_proto",
+        "@googleapis//google/api:usage_proto",
+        "@googleapis//google/api:visibility_proto",
+    ],
+    deps = [
+        "@rules_proto_grpc_rust//google/rpc:rpc_rust_proto",
+        "@rules_proto_grpc_rust//google/type:type_rust_proto",
+    ],
+)
+
+alias(
+    name = "annotations_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "auth_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "backend_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "billing_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "client_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "config_change_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "consumer_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "context_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "control_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "distribution_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "documentation_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "endpoint_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "error_reason_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "field_behavior_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "field_info_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "http_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "httpbody_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "label_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "launch_stage_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "log_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "logging_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "metric_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "monitored_resource_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "monitoring_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "policy_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "quota_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "resource_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "routing_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "service_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "source_info_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "system_parameter_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "usage_rust_proto",
+    actual = ":api_rust_proto",
+)
+
+alias(
+    name = "visibility_rust_proto",
+    actual = ":api_rust_proto",
+)

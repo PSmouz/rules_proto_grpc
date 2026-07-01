@@ -4,9 +4,6 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 rust_grpc_library(
     name = "routeguide_grpc",
     declared_proto_packages = ["routeguide"],
-    options = {
-        "@rules_proto_grpc_rust//:rust_proto_plugin": ["type_attribute=.routeguide.Point=#[derive(Eq\\,Hash)]"],
-    },
     protos = ["@rules_proto_grpc_example_protos//:routeguide_proto"],
 )
 
@@ -18,11 +15,11 @@ rust_binary(
     visibility = ["//examples/routeguide:__pkg__"],
     deps = [
         ":routeguide_grpc",
-        "@rules_proto_grpc_rust_crates//:async-stream",
-        "@rules_proto_grpc_rust_crates//:futures",
-        "@rules_proto_grpc_rust_crates//:rand",
-        "@rules_proto_grpc_rust_crates//:tokio",
-        "@rules_proto_grpc_rust_crates//:tonic",
+        "@rules_proto_grpc_rust//rust:async-stream",
+        "@rules_proto_grpc_rust//rust:futures",
+        "@rules_proto_grpc_rust//rust:rand",
+        "@rules_proto_grpc_rust//rust:tokio",
+        "@rules_proto_grpc_rust//rust:tonic",
     ],
 )
 
@@ -37,12 +34,12 @@ rust_binary(
     visibility = ["//examples/routeguide:__pkg__"],
     deps = [
         ":routeguide_grpc",
-        "@rules_proto_grpc_rust_crates//:async-stream",
-        "@rules_proto_grpc_rust_crates//:futures",
-        "@rules_proto_grpc_rust_crates//:serde",
-        "@rules_proto_grpc_rust_crates//:serde_json",
-        "@rules_proto_grpc_rust_crates//:tokio",
-        "@rules_proto_grpc_rust_crates//:tokio-stream",
-        "@rules_proto_grpc_rust_crates//:tonic",
+        "@rules_proto_grpc_rust//rust:async-stream",
+        "@rules_proto_grpc_rust//rust:futures",
+        "@rules_proto_grpc_rust//rust:serde",
+        "@rules_proto_grpc_rust//rust:serde_json",
+        "@rules_proto_grpc_rust//rust:tokio",
+        "@rules_proto_grpc_rust//rust:tokio-stream",
+        "@rules_proto_grpc_rust//rust:tonic",
     ],
 )

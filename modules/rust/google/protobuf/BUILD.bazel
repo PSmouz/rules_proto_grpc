@@ -1,0 +1,23 @@
+load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_proto_library(
+    name = "protobuf_rust_proto",
+    _implicit_protobuf = False,
+    crate_name = "google_protobuf",
+    declared_proto_packages = ["google.protobuf"],
+    protos = [
+        "@protobuf//:any_proto",
+        "@protobuf//:api_proto",
+        "@protobuf//:descriptor_proto",
+        "@protobuf//:duration_proto",
+        "@protobuf//:empty_proto",
+        "@protobuf//:field_mask_proto",
+        "@protobuf//:source_context_proto",
+        "@protobuf//:struct_proto",
+        "@protobuf//:timestamp_proto",
+        "@protobuf//:type_proto",
+        "@protobuf//:wrappers_proto",
+    ],
+)

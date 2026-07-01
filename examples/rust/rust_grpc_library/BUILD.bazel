@@ -1,4 +1,4 @@
-load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library", "rust_grpc_library")
+load("@rules_proto_grpc_rust//:defs.bzl", "rust_grpc_library", "rust_proto_library")
 
 rust_grpc_library(
     name = "greeter_rust_grpc",
@@ -9,13 +9,13 @@ rust_grpc_library(
             "type_attribute=.example.proto.Place=#[derive(Eq\\,Hash)]",
         ],
     },
-    proto_deps = [
-        ":thing_rust_proto",
-    ],
     protos = [
         "@rules_proto_grpc_example_protos//:greeter_grpc",
         "@rules_proto_grpc_example_protos//:person_proto",
         "@rules_proto_grpc_example_protos//:place_proto",
+    ],
+    deps = [
+        ":thing_rust_proto",
     ],
 )
 

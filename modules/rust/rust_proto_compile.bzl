@@ -6,7 +6,7 @@ load(
     "proto_compile_attrs",
     "proto_compile_toolchains",
 )
-load(":common.bzl", "RustProtoInfo", "rust_compile_attrs", "rust_proto_compile_impl")
+load(":common.bzl", "RustProtoInfo", "rust_proto_compile_impl")
 
 # Create compile rule
 rust_proto_compile = rule(
@@ -16,7 +16,11 @@ rust_proto_compile = rule(
         proto_deps = attr.label_list(
             providers = [RustProtoInfo],
             mandatory = False,
-            doc = "Other Rust proto compile targets that this proto directly depends upon. Used to generate extern_path options.",
+            doc = "Deprecated. Use deps instead. Other Rust proto targets that this proto directly depends upon. Used to generate extern_path options.",
+        ),
+        deps = attr.label_list(
+            mandatory = False,
+            doc = "Rust dependencies for this proto. Dependencies that provide RustProtoInfo are used to generate extern_path options; other Rust dependencies are ignored by codegen.",
         ),
         declared_proto_packages = attr.string_list(
             mandatory = True,

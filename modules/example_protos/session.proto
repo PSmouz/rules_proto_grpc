@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "github.com/rules-proto-grpc/rules_proto_grpc/examples/proto";
+
+package example.session;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/latlng.proto";
+
+message Session {
+    option (google.api.resource) = {
+        type: "example.googleapis.com/Session"
+        pattern: "sessions/{session}"
+    };
+
+    string name = 1 [(google.api.field_behavior) = REQUIRED];
+    google.type.LatLng location = 2;
+    google.protobuf.Timestamp created_at = 3;
+}

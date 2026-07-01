@@ -2,20 +2,21 @@
 
 load("@rules_proto_grpc//:defs.bzl", "bazel_build_rule_common_attrs", "proto_compile_attrs")
 load("@rules_rust//rust:defs.bzl", "rust_library")
-load(":common.bzl", "crate_label", "prepare_rust_proto_deps", "proto_runtime_label", "rust_compile_attrs")
+load(":common.bzl", "crate_label", "merge_rust_deps", "rust_compile_attrs", "rust_proto_library_forward")
 load(":rust_fixer.bzl", "rust_proto_crate_fixer", "rust_proto_crate_root")
 load(":rust_proto_compile.bzl", "rust_proto_compile")
 
 def rust_proto_library(name, **kwargs):
-    """Generates Rust protobuf code and wraps it in a `rust_library`.
+    """Generates Rust proto code and wraps it in a rust_library.
 
     Args:
-        name: Name of the generated `rust_library` target.
+        name: Name of the generated rust_library target.
         **kwargs: Common Bazel attributes are forwarded to both generated
             targets; proto compile attributes are forwarded to
-            `rust_proto_compile`; Rust-specific attributes such as
-            `crate_name`, `declared_proto_packages`, and `proto_deps` configure
-            crate generation.
+            rust_proto_compile; Rust-specific attributes
+            such as crate_name and declared_proto_packages configure crate
+            generation. proto_deps is deprecated; use deps for Rust proto deps
+            and ordinary Rust deps.
     """
 
     # Compile protos
@@ -23,19 +24,23 @@ def rust_proto_library(name, **kwargs):
     name_fixed = name_pb + "_fixed"
     name_root = name + "_root"
 
-    proto_deps = kwargs.get("proto_deps", [])
-    rust_proto_compiled_targets = prepare_rust_proto_deps(proto_deps)
+    include_implicit_protobuf = kwargs.get("_implicit_protobuf", True)
+    rust_deps = merge_rust_deps(
+        kwargs.get("deps", []),
+        kwargs.get("proto_deps", []),
+        include_implicit_protobuf,
+    )
 
     rust_proto_compile(
         name = name_pb,
         crate_name = kwargs.get("crate_name", name),
-        proto_deps = rust_proto_compiled_targets,
+        deps = rust_deps,
         **{
             k: v
             for (k, v) in kwargs.items()
             if k in proto_compile_attrs.keys() or
                k in bazel_build_rule_common_attrs or
-               (k in rust_compile_attrs and k not in ["crate_name", "proto_deps"])
+               (k in rust_compile_attrs and k not in ["crate_name", "proto_deps", "deps"])
         }  # Forward args
     )
 
@@ -52,25 +57,38 @@ def rust_proto_library(name, **kwargs):
         crate_dir = name_fixed,
     )
 
+    name_rust_library = name + "_rust_library"
+    common_attrs = {
+        k: v
+        for (k, v) in kwargs.items()
+        if k in bazel_build_rule_common_attrs
+    }
+    inner_common_attrs = {
+        k: v
+        for (k, v) in common_attrs.items()
+        if k not in ["visibility", "deprecation"]
+    }
+
     # Create rust library
     rust_library(
-        name = name,
+        name = name_rust_library,
         crate_name = kwargs.get("crate_name", name),
         crate_root = name_root,
         edition = kwargs.get("edition", "2021"),
         srcs = [name_fixed],
-        deps = [proto_runtime_label()] +
-               [crate_label("prost"), crate_label("prost-types"), crate_label("proto-types")] +
-               [crate_label("pbjson"), crate_label("pbjson-types")] +
+        deps = [crate_label("prost")] +
+               [crate_label("pbjson")] +
                [crate_label("serde")] +
-               kwargs.get("deps", []) +
-               proto_deps,
+               rust_deps,
         proc_macro_deps = kwargs.get("proc_macro_deps", []) + [
             crate_label("prost-derive"),
         ],
-        **{
-            k: v
-            for (k, v) in kwargs.items()
-            if k in bazel_build_rule_common_attrs
-        }  # Forward Bazel common args
+        **inner_common_attrs
+    )
+
+    rust_proto_library_forward(
+        name = name,
+        actual = name_rust_library,
+        compilation = name_pb,
+        **common_attrs
     )

@@ -7,6 +7,9 @@ rust_proto_library(
     protos = [
         "@rules_proto_grpc_example_protos//:common_types_proto",
     ],
+    deps = [
+        "@rules_proto_grpc_rust//google/type:money_rust_proto",
+    ],
 )
 
 rust_proto_library(
@@ -18,12 +21,25 @@ rust_proto_library(
             "type_attribute=.example.proto.Place=#[derive(Eq\\,Hash)]",
         ],
     },
-    proto_deps = [
-        ":thing_rust_proto",
-    ],
     protos = [
         "@rules_proto_grpc_example_protos//:person_proto",
         "@rules_proto_grpc_example_protos//:place_proto",
+    ],
+    deps = [
+        ":thing_rust_proto",
+    ],
+)
+
+rust_proto_library(
+    name = "session_rust_proto",
+    declared_proto_packages = ["example.session"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:session_proto",
+    ],
+    deps = [
+        "@rules_proto_grpc_rust//google/api:field_behavior_rust_proto",
+        "@rules_proto_grpc_rust//google/api:resource_rust_proto",
+        "@rules_proto_grpc_rust//google/type:latlng_rust_proto",
     ],
 )
 
@@ -40,6 +56,17 @@ rust_test(
     srcs = ["proto_runtime_test.rs"],
     deps = [
         ":person_place_rust_proto",
+        "@rules_proto_grpc_rust//rust:proto_runtime",
+    ],
+)
+
+rust_test(
+    name = "google_deps_test",
+    srcs = ["google_deps_test.rs"],
+    deps = [
+        ":session_rust_proto",
+        "@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto",
+        "@rules_proto_grpc_rust//google/type:latlng_rust_proto",
         "@rules_proto_grpc_rust//rust:proto_runtime",
     ],
 )

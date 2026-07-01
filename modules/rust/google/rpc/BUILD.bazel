@@ -1,0 +1,35 @@
+load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_proto_library(
+    name = "rpc_rust_proto",
+    crate_name = "google_rpc",
+    declared_proto_packages = ["google.rpc"],
+    protos = [
+        "@googleapis//google/rpc:code_proto",
+        "@googleapis//google/rpc:error_details_proto",
+        "@googleapis//google/rpc:http_proto",
+        "@googleapis//google/rpc:status_proto",
+    ],
+)
+
+alias(
+    name = "code_rust_proto",
+    actual = ":rpc_rust_proto",
+)
+
+alias(
+    name = "error_details_rust_proto",
+    actual = ":rpc_rust_proto",
+)
+
+alias(
+    name = "http_rust_proto",
+    actual = ":rpc_rust_proto",
+)
+
+alias(
+    name = "status_rust_proto",
+    actual = ":rpc_rust_proto",
+)

@@ -1,6 +1,7 @@
 """Common support for rules_proto_grpc Rust rules."""
 
 load("@rules_proto_grpc//:defs.bzl", "proto_compile")
+load("@rules_rust//rust:defs.bzl", "rust_common")
 
 RustProtoInfo = provider(
     doc = "Additional information needed by Rust proto compilation rules.",
@@ -14,6 +15,7 @@ rust_compile_attrs = [
     "declared_proto_packages",
     "crate_name",
     "proto_deps",
+    "deps",
 ]
 
 def crate_label(name):
@@ -31,26 +33,88 @@ def proto_runtime_label():
     """Returns the public Rust proto runtime target."""
     return Label("@rules_proto_grpc_rust//rust:proto_runtime")
 
-def prepare_rust_proto_deps(proto_deps):
-    """Returns compile targets for Rust proto deps passed to Rust libraries.
+def implicit_protobuf_label():
+    """Returns the canonical generated Rust crate for google.protobuf."""
+    return Label("@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto")
+
+def dedupe_labels(labels):
+    """Deduplicates a list of labels while preserving the first occurrence.
 
     Args:
-        proto_deps: Rust proto library or compile labels passed to a library
-            macro.
+        labels: Labels to deduplicate.
 
     Returns:
-        A list of labels pointing at Rust proto compile targets.
+        The deduplicated labels in their original order.
     """
-    rust_proto_compiled_targets = []
+    seen = {}
+    result = []
 
-    for dep in proto_deps:
-        dep = str(dep)
-        if dep.endswith("_pb"):
-            rust_proto_compiled_targets.append(dep)
-        else:
-            rust_proto_compiled_targets.append(dep + "_pb")
+    for label in labels:
+        key = str(label)
+        if key in seen:
+            continue
+        seen[key] = True
+        result.append(label)
 
-    return rust_proto_compiled_targets
+    return result
+
+def merge_rust_deps(deps, proto_deps, include_implicit_protobuf = True):
+    """Merges Rust deps and legacy proto_deps into the single dependency list.
+
+    Args:
+        deps: Labels passed in the public deps attr.
+        proto_deps: Labels passed in the deprecated proto_deps attr.
+        include_implicit_protobuf: Whether to add the generated google.protobuf
+            Rust crate automatically.
+
+    Returns:
+        A deduplicated list of labels.
+    """
+    merged = []
+    merged.extend(deps)
+    merged.extend(proto_deps)
+
+    if include_implicit_protobuf:
+        merged.append(implicit_protobuf_label())
+
+    return dedupe_labels(merged)
+
+def rust_proto_library_forward_impl(ctx):
+    """Forwards a generated rust_library while adding RustProtoInfo.
+
+    Args:
+        ctx: Rule context.
+
+    Returns:
+        Providers from the underlying rust_library plus RustProtoInfo.
+    """
+    actual = ctx.attr.actual
+    compilation = ctx.attr.compilation[RustProtoInfo]
+
+    providers = [
+        actual[DefaultInfo],
+        actual[rust_common.crate_info],
+        actual[rust_common.dep_info],
+        compilation,
+    ]
+
+    return providers
+
+rust_proto_library_forward = rule(
+    doc = "Forwards a generated rust_library and exposes RustProtoInfo on the public target.",
+    implementation = rust_proto_library_forward_impl,
+    attrs = {
+        "actual": attr.label(
+            doc = "The underlying rust_library target to forward.",
+            mandatory = True,
+        ),
+        "compilation": attr.label(
+            doc = "The Rust proto compile target providing RustProtoInfo.",
+            providers = [RustProtoInfo],
+            mandatory = True,
+        ),
+    },
+)
 
 def rust_proto_compile_impl(ctx):
     """Implements Rust proto and gRPC compile rules.
@@ -67,7 +131,12 @@ def rust_proto_compile_impl(ctx):
         The providers returned by `proto_compile` plus `RustProtoInfo`.
     """
     externs = []
-    for dep in ctx.attr.proto_deps:
+    rust_deps = []
+    rust_deps.extend(getattr(ctx.attr, "deps", []))
+    rust_deps.extend(getattr(ctx.attr, "proto_deps", []))
+
+    seen_packages = {}
+    for dep in rust_deps:
         if RustProtoInfo not in dep:
             continue
 
@@ -75,6 +144,9 @@ def rust_proto_compile_impl(ctx):
         dep_crate = proto_info.crate_name
 
         for package in proto_info.declared_proto_packages:
+            if package in seen_packages:
+                continue
+            seen_packages[package] = True
             externs.append("extern_path={}=::{}::{}".format(
                 "." + package,
                 dep_crate,
