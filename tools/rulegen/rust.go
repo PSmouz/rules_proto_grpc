@@ -272,6 +272,25 @@ load("@rules_rust//rust:defs.bzl", "rust_test")
     ],
 )
 
+{{ .Rule.Name }}(
+    name = "keyword_type_{{ .Rule.Base }}_{{ .Rule.Kind }}",
+    declared_proto_packages = ["example.keyword.type"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:keyword_type_proto",
+    ],
+)
+
+{{ .Rule.Name }}(
+    name = "keyword_consumer_{{ .Rule.Base }}_{{ .Rule.Kind }}",
+    declared_proto_packages = ["example.keyword.consumer"],
+    deps = [
+        ":keyword_type_{{ .Rule.Base }}_{{ .Rule.Kind }}",
+    ],
+    protos = [
+        "@rules_proto_grpc_example_protos//:keyword_consumer_proto",
+    ],
+)
+
 rust_test(
     name = "proto_runtime_test",
     srcs = ["proto_runtime_test.rs"],
@@ -287,6 +306,8 @@ rust_test(
     deps = [
         ":event_{{ .Rule.Base }}_{{ .Rule.Kind }}",
         ":identity_{{ .Rule.Base }}_{{ .Rule.Kind }}",
+        ":keyword_consumer_{{ .Rule.Base }}_{{ .Rule.Kind }}",
+        ":keyword_type_{{ .Rule.Base }}_{{ .Rule.Kind }}",
         ":session_{{ .Rule.Base }}_{{ .Rule.Kind }}",
         "@rules_proto_grpc_rust//google/api:field_behavior_rust_proto",
         "@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto",
@@ -321,6 +342,14 @@ rust_proto_library(
     declared_proto_packages = ["example.proto"],
     protos = [
         "@rules_proto_grpc_example_protos//:thing_proto",
+    ],
+)
+
+{{ .Rule.Name }}(
+    name = "wkt_service_{{ .Rule.Base }}_{{ .Rule.Kind }}",
+    declared_proto_packages = ["example.wktservice"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:wkt_service_proto",
     ],
 )`)
 

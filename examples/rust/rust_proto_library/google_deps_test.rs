@@ -1,6 +1,7 @@
 use proto_runtime::prost::Message;
 use proto_runtime::serde_json;
 use identity_rust_proto::example::events::identity::v1::IdentityEvent;
+use keyword_consumer_rust_proto::example::keyword::consumer::KeywordConsumer;
 use session_rust_proto::example::session::Session;
 
 #[test]
@@ -48,4 +49,19 @@ fn nested_package_dependency_does_not_extern_current_crate_types() {
 
     assert_eq!(decoded.subject, "users/1");
     assert!(decoded.event.is_some());
+}
+
+#[test]
+fn extern_paths_escape_rust_keyword_segments() {
+    let consumer = KeywordConsumer {
+        role: Some(keyword_type_rust_proto::example::keyword::r#type::KeywordRole {
+            name: "signer".to_owned(),
+        }),
+    };
+
+    let mut bytes = Vec::new();
+    consumer.encode(&mut bytes).unwrap();
+    let decoded = KeywordConsumer::decode(bytes.as_slice()).unwrap();
+
+    assert_eq!(decoded.role.unwrap().name, "signer");
 }

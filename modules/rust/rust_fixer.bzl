@@ -10,12 +10,14 @@ needed `include!` statements so serde and gRPC code is part of the crate.
 load("@rules_proto_grpc//:defs.bzl", "ProtoCompileInfo")
 load(
     ":common.bzl",
+    "RUST_RAW_IDENTIFIER_KEYWORDS",
     "RustProtoInfo",
     "proto_package_is_ancestor_or_equal",
+    "rust_proto_package_path",
 )
 
 def _rust_path_for_proto_package(crate_name, package):
-    return "::{}::{}::".format(crate_name, package.replace(".", "::"))
+    return "::{}::{}::".format(crate_name, rust_proto_package_path(package))
 
 def _ancestor_relative_rewrite_specs(compilation, deps):
     """Builds prefix rewrite specs for ancestor-package Rust imports.
@@ -98,13 +100,17 @@ def _rust_proto_crate_fixer(ctx):
     """
     compilation = ctx.attr.compilation[ProtoCompileInfo]
     rewrite_specs = _ancestor_relative_rewrite_specs(ctx.attr.compilation, ctx.attr.deps)
+    keyword_rewrites = [
+        keyword
+        for keyword in RUST_RAW_IDENTIFIER_KEYWORDS
+    ]
     in_dir = compilation.output_dirs.to_list()[0]
     out_dir = ctx.actions.declare_directory("%s_fixed" % compilation.label.name)
 
     ctx.actions.run_shell(
         outputs = [out_dir],
         inputs = [in_dir],
-        arguments = [in_dir.path, out_dir.path] + rewrite_specs,
+        arguments = [in_dir.path, out_dir.path] + rewrite_specs + ["--"] + keyword_rewrites,
         command = """
 set -eu
 
@@ -124,7 +130,18 @@ find "$2" -type f ! -name 'mod.rs' ! -name '*.serde.rs' ! -name '*.tonic.rs' | w
 done
 
 shift 2
-printf '%s\n' "$@" | sort | while read -r spec; do
+ancestor_specs=""
+while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do
+    ancestor_specs="${ancestor_specs}
+$1"
+    shift
+done
+
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+
+printf '%s\n' "$ancestor_specs" | sort | while read -r spec; do
     if [ -z "$spec" ]; then
         continue
     fi
@@ -142,6 +159,13 @@ printf '%s\n' "$@" | sort | while read -r spec; do
             rm -f "$generated.bak"
         done
     fi
+done
+
+for keyword in "$@"; do
+    find "$out_dir" -type f -name '*.rs' | while read -r generated; do
+        sed -i.bak "s|::${keyword}::|::r#${keyword}::|g" "$generated"
+        rm -f "$generated.bak"
+    done
 done
 """,
     )

@@ -37,6 +37,71 @@ def implicit_protobuf_label():
     """Returns the canonical generated Rust crate for google.protobuf."""
     return Label("@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto")
 
+RUST_RAW_IDENTIFIER_KEYWORDS = {
+    "abstract": True,
+    "as": True,
+    "async": True,
+    "await": True,
+    "become": True,
+    "box": True,
+    "break": True,
+    "const": True,
+    "continue": True,
+    "do": True,
+    "dyn": True,
+    "else": True,
+    "enum": True,
+    "extern": True,
+    "false": True,
+    "final": True,
+    "fn": True,
+    "for": True,
+    "gen": True,
+    "if": True,
+    "impl": True,
+    "in": True,
+    "let": True,
+    "loop": True,
+    "macro": True,
+    "match": True,
+    "mod": True,
+    "move": True,
+    "mut": True,
+    "override": True,
+    "priv": True,
+    "pub": True,
+    "ref": True,
+    "return": True,
+    "static": True,
+    "struct": True,
+    "trait": True,
+    "true": True,
+    "try": True,
+    "type": True,
+    "typeof": True,
+    "unsafe": True,
+    "unsized": True,
+    "use": True,
+    "virtual": True,
+    "where": True,
+    "while": True,
+    "yield": True,
+}
+
+def rust_identifier_path_segment(segment):
+    """Escapes a proto package segment for a Rust path when needed."""
+    if segment in RUST_RAW_IDENTIFIER_KEYWORDS:
+        return "r#" + segment
+
+    return segment
+
+def rust_proto_package_path(package):
+    """Converts a proto package into the generated Rust module path."""
+    return "::".join([
+        rust_identifier_path_segment(segment)
+        for segment in package.split(".")
+    ])
+
 def dedupe_labels(labels):
     """Deduplicates a list of labels while preserving the first occurrence.
 
@@ -103,6 +168,14 @@ def proto_package_overlaps_declared(package, declared_packages):
     """
     for declared in declared_packages:
         if proto_package_is_ancestor_or_equal(package, declared):
+            return True
+
+    return False
+
+def rust_plugin_enabled(ctx, plugin_name):
+    """Returns whether a Rust protoc plugin is enabled on this compile rule."""
+    for plugin in getattr(ctx.attr, "_plugins", []):
+        if plugin.label.name == plugin_name:
             return True
 
     return False
@@ -187,8 +260,13 @@ def rust_proto_compile_impl(ctx):
     options = dict(ctx.attr.options)
     proto_plugin = "@rules_proto_grpc_rust//:rust_proto_plugin"
     serde_plugin = "@rules_proto_grpc_rust//:rust_serde_plugin"
-    options[proto_plugin] = options.get(proto_plugin, []) + externs
-    options[serde_plugin] = options.get(serde_plugin, []) + externs
+    grpc_plugin = "@rules_proto_grpc_rust//:rust_grpc_plugin"
+    if rust_plugin_enabled(ctx, "rust_proto_plugin"):
+        options[proto_plugin] = options.get(proto_plugin, []) + externs
+    if rust_plugin_enabled(ctx, "rust_serde_plugin"):
+        options[serde_plugin] = options.get(serde_plugin, []) + externs
+    if rust_plugin_enabled(ctx, "rust_grpc_plugin"):
+        options[grpc_plugin] = options.get(grpc_plugin, []) + externs
 
     compile_result = proto_compile(
         ctx,

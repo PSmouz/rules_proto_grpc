@@ -26,3 +26,11 @@ rust_proto_library(
         "@rules_proto_grpc_example_protos//:thing_proto",
     ],
 )
+
+rust_grpc_library(
+    name = "wkt_service_rust_grpc",
+    declared_proto_packages = ["example.wktservice"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:wkt_service_proto",
+    ],
+)

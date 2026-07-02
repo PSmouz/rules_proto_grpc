@@ -326,10 +326,48 @@ Full example project can be found `here <https://github.com/rules-proto-grpc/rul
    )
    
    rust_proto_library(
+       name = "event_rust_proto",
+       declared_proto_packages = ["example.events"],
+       protos = [
+           "@rules_proto_grpc_example_protos//:event_proto",
+       ],
+   )
+   
+   rust_proto_library(
+       name = "identity_rust_proto",
+       declared_proto_packages = ["example.events.identity.v1"],
+       deps = [
+           ":event_rust_proto",
+       ],
+       protos = [
+           "@rules_proto_grpc_example_protos//:identity_proto",
+       ],
+   )
+   
+   rust_proto_library(
        name = "thing_rust_proto",
        declared_proto_packages = ["example.proto"],
        protos = [
            "@rules_proto_grpc_example_protos//:thing_proto",
+       ],
+   )
+   
+   rust_proto_library(
+       name = "keyword_type_rust_proto",
+       declared_proto_packages = ["example.keyword.type"],
+       protos = [
+           "@rules_proto_grpc_example_protos//:keyword_type_proto",
+       ],
+   )
+   
+   rust_proto_library(
+       name = "keyword_consumer_rust_proto",
+       declared_proto_packages = ["example.keyword.consumer"],
+       deps = [
+           ":keyword_type_rust_proto",
+       ],
+       protos = [
+           "@rules_proto_grpc_example_protos//:keyword_consumer_proto",
        ],
    )
    
@@ -346,7 +384,12 @@ Full example project can be found `here <https://github.com/rules-proto-grpc/rul
        name = "google_deps_test",
        srcs = ["google_deps_test.rs"],
        deps = [
+           ":event_rust_proto",
+           ":identity_rust_proto",
+           ":keyword_consumer_rust_proto",
+           ":keyword_type_rust_proto",
            ":session_rust_proto",
+           "@rules_proto_grpc_rust//google/api:field_behavior_rust_proto",
            "@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto",
            "@rules_proto_grpc_rust//google/type:latlng_rust_proto",
            "@rules_proto_grpc_rust//rust:proto_runtime",
@@ -474,6 +517,14 @@ Full example project can be found `here <https://github.com/rules-proto-grpc/rul
        declared_proto_packages = ["example.proto"],
        protos = [
            "@rules_proto_grpc_example_protos//:thing_proto",
+       ],
+   )
+   
+   rust_grpc_library(
+       name = "wkt_service_rust_grpc",
+       declared_proto_packages = ["example.wktservice"],
+       protos = [
+           "@rules_proto_grpc_example_protos//:wkt_service_proto",
        ],
    )
 

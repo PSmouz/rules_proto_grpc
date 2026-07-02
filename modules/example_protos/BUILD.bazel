@@ -90,6 +90,31 @@ proto_library(
 )
 
 proto_library(
+    name = "keyword_type_proto",
+    srcs = ["keyword_type.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "keyword_consumer_proto",
+    srcs = ["keyword_consumer.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+    deps = [":keyword_type_proto"],
+)
+
+proto_library(
+    name = "wkt_service_proto",
+    srcs = ["wkt_service.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@protobuf//:empty_proto",
+    ],
+)
+
+proto_library(
     name = "greeter_grpc",
     srcs = [
         "greeter.proto",

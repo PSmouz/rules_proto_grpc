@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "github.com/rules-proto-grpc/rules_proto_grpc/examples/proto";
+
+package example.keyword.consumer;
+
+import "examples/proto/keyword_type.proto";
+
+message KeywordConsumer {
+    example.keyword.type.KeywordRole role = 1;
+}

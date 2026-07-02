@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "github.com/rules-proto-grpc/rules_proto_grpc/examples/proto";
+
+package example.wktservice;
+
+import "google/protobuf/empty.proto";
+
+service WktService {
+    rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+}

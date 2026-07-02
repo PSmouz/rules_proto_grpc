@@ -70,6 +70,25 @@ rust_proto_library(
     ],
 )
 
+rust_proto_library(
+    name = "keyword_type_rust_proto",
+    declared_proto_packages = ["example.keyword.type"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:keyword_type_proto",
+    ],
+)
+
+rust_proto_library(
+    name = "keyword_consumer_rust_proto",
+    declared_proto_packages = ["example.keyword.consumer"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:keyword_consumer_proto",
+    ],
+    deps = [
+        ":keyword_type_rust_proto",
+    ],
+)
+
 rust_test(
     name = "proto_runtime_test",
     srcs = ["proto_runtime_test.rs"],
@@ -85,6 +104,8 @@ rust_test(
     deps = [
         ":event_rust_proto",
         ":identity_rust_proto",
+        ":keyword_consumer_rust_proto",
+        ":keyword_type_rust_proto",
         ":session_rust_proto",
         "@rules_proto_grpc_rust//google/api:field_behavior_rust_proto",
         "@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto",
