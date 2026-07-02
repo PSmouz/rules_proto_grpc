@@ -50,6 +50,7 @@ def rust_grpc_library(name, **kwargs):
     rust_proto_crate_fixer(
         name = name_fixed,
         compilation = name_pb,
+        deps = rust_deps,
     )
 
     rust_proto_crate_root(

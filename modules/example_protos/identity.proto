@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option go_package = "github.com/rules-proto-grpc/rules_proto_grpc/examples/proto";
+
+package example.events.identity.v1;
+
+import "examples/proto/event.proto";
+
+message IdentityEvent {
+    string subject = 1;
+    example.events.CloudEvent event = 2;
+}

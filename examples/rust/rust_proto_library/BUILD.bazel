@@ -44,6 +44,25 @@ rust_proto_library(
 )
 
 rust_proto_library(
+    name = "event_rust_proto",
+    declared_proto_packages = ["example.events"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:event_proto",
+    ],
+)
+
+rust_proto_library(
+    name = "identity_rust_proto",
+    declared_proto_packages = ["example.events.identity.v1"],
+    protos = [
+        "@rules_proto_grpc_example_protos//:identity_proto",
+    ],
+    deps = [
+        ":event_rust_proto",
+    ],
+)
+
+rust_proto_library(
     name = "thing_rust_proto",
     declared_proto_packages = ["example.proto"],
     protos = [
@@ -64,7 +83,10 @@ rust_test(
     name = "google_deps_test",
     srcs = ["google_deps_test.rs"],
     deps = [
+        ":event_rust_proto",
+        ":identity_rust_proto",
         ":session_rust_proto",
+        "@rules_proto_grpc_rust//google/api:field_behavior_rust_proto",
         "@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto",
         "@rules_proto_grpc_rust//google/type:latlng_rust_proto",
         "@rules_proto_grpc_rust//rust:proto_runtime",

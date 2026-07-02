@@ -18,4 +18,5 @@ message Session {
     string name = 1 [(google.api.field_behavior) = REQUIRED];
     google.type.LatLng location = 2;
     google.protobuf.Timestamp created_at = 3;
+    google.api.FieldBehavior behavior = 4;
 }

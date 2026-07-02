@@ -1,0 +1,21 @@
+load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_proto_library(
+    name = "longrunning_rust_proto",
+    crate_name = "google_longrunning",
+    declared_proto_packages = ["google.longrunning"],
+    protos = [
+        "@googleapis//google/longrunning:operations_proto",
+    ],
+    deps = [
+        "@rules_proto_grpc_rust//google/api:api_rust_proto",
+        "@rules_proto_grpc_rust//google/rpc:rpc_rust_proto",
+    ],
+)
+
+alias(
+    name = "operations_rust_proto",
+    actual = ":longrunning_rust_proto",
+)

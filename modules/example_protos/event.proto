@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "github.com/rules-proto-grpc/rules_proto_grpc/examples/proto";
+
+package example.events;
+
+message CloudEvent {
+    string id = 1;
+    string source = 2;
+}

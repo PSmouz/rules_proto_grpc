@@ -75,6 +75,21 @@ proto_library(
 )
 
 proto_library(
+    name = "event_proto",
+    srcs = ["event.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "identity_proto",
+    srcs = ["identity.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+    deps = [":event_proto"],
+)
+
+proto_library(
     name = "greeter_grpc",
     srcs = [
         "greeter.proto",
