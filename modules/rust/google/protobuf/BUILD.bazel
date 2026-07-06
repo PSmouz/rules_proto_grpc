@@ -7,7 +7,7 @@ exports_files(["wkt.rs"])
 rust_proto_library(
     name = "protobuf_rust_proto",
     _implicit_protobuf = False,
-    _pbjson_wkt_reexports = True,
+    _canonical_wkt_reexports = True,
     crate_name = "google_protobuf",
     declared_proto_packages = ["google.protobuf"],
     protos = [

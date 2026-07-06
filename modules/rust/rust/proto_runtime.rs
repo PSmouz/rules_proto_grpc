@@ -6,7 +6,6 @@
 //! `prost`, `serde`, and the related JSON/runtime crates stay identical.
 
 pub use pbjson;
-pub use pbjson_types;
 pub use prost;
 pub use prost_types;
 pub use proto_types;

@@ -107,11 +107,11 @@ def _rust_proto_crate_fixer(ctx):
     in_dir = compilation.output_dirs.to_list()[0]
     out_dir = ctx.actions.declare_directory("%s_fixed" % compilation.label.name)
     inputs = [in_dir]
-    arguments = [in_dir.path, out_dir.path, "1" if ctx.attr.pbjson_wkt_reexports else "0"]
+    arguments = [in_dir.path, out_dir.path, "1" if ctx.attr.canonical_wkt_reexports else "0"]
 
-    if ctx.file.pbjson_wkt_reexports_src:
-        inputs.append(ctx.file.pbjson_wkt_reexports_src)
-        arguments.append(ctx.file.pbjson_wkt_reexports_src.path)
+    if ctx.file.canonical_wkt_reexports_src:
+        inputs.append(ctx.file.canonical_wkt_reexports_src)
+        arguments.append(ctx.file.canonical_wkt_reexports_src.path)
     else:
         arguments.append("")
 
@@ -123,8 +123,8 @@ def _rust_proto_crate_fixer(ctx):
 set -eu
 
 out_dir="$2"
-pbjson_wkt_reexports="$3"
-pbjson_wkt_reexports_src="$4"
+canonical_wkt_reexports="$3"
+canonical_wkt_reexports_src="$4"
 
 cp -RL "$1"/. "$2"/
 chmod -R +w "$2"
@@ -139,16 +139,29 @@ find "$2" -type f ! -name 'mod.rs' ! -name '*.serde.rs' ! -name '*.tonic.rs' | w
     done
 done
 
-if [ "$pbjson_wkt_reexports" = "1" ]; then
-    cp "$pbjson_wkt_reexports_src" "$out_dir/wkt.rs"
+if [ "$canonical_wkt_reexports" = "1" ]; then
+    cp "$canonical_wkt_reexports_src" "$out_dir/wkt.rs"
+    if [ -f "$out_dir/google/protobuf/google.protobuf.rs" ]; then
+        sed -i.bak 's/::core::option::Option<Any>/::core::option::Option<super::Any>/g' "$out_dir/google/protobuf/google.protobuf.rs"
+        rm -f "$out_dir/google/protobuf/google.protobuf.rs.bak"
+    fi
     cat > "$out_dir/mod.rs" <<'EOF'
 // @generated
 mod wkt;
 
 pub mod google {
     pub mod protobuf {
-        pub use pbjson_types::*;
-        pub use crate::wkt::{Any, FieldMask};
+        mod generated {
+            #![allow(dead_code)]
+            include!("google/protobuf/google.protobuf.rs");
+        }
+
+        pub use generated::*;
+        pub use crate::wkt::{
+            value, Any, BoolValue, BytesValue, DoubleValue, Duration, Empty, FieldMask, FloatValue,
+            Int32Value, Int64Value, ListValue, NullValue, StringValue, Struct, Timestamp,
+            UInt32Value, UInt64Value, Value,
+        };
     }
 }
 EOF
@@ -222,11 +235,11 @@ rust_proto_crate_fixer = rule(
         "deps": attr.label_list(
             doc = "Rust dependencies used to repair ancestor-package relative imports.",
         ),
-        "pbjson_wkt_reexports": attr.bool(
-            doc = "Replace google.protobuf output with pbjson-types canonical WKT re-exports.",
+        "canonical_wkt_reexports": attr.bool(
+            doc = "Replace google.protobuf output with canonical local WKT implementations.",
             default = False,
         ),
-        "pbjson_wkt_reexports_src": attr.label(
+        "canonical_wkt_reexports_src": attr.label(
             doc = "Rust source file containing local canonical WKT replacements.",
             allow_single_file = True,
         ),

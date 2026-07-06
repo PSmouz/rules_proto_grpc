@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use google_protobuf::google::protobuf::{
     value, Any, BoolValue, BytesValue, DoubleValue, Duration, Empty, FieldMask, FloatValue,
-    Int32Value, Int64Value, ListValue, StringValue, Struct, Timestamp, UInt32Value, UInt64Value,
-    Value,
+    Int32Value, Int64Value, ListValue, Option as ProtoOption, StringValue, Struct, Timestamp,
+    UInt32Value, UInt64Value, Value,
 };
 use proto_runtime::{prost::bytes::Bytes, serde_json};
 
@@ -18,6 +18,9 @@ fn timestamp_uses_canonical_protojson_string() {
         serde_json::to_string(&timestamp).unwrap(),
         "\"2026-01-02T02:54:05+00:00\"",
     );
+
+    let decoded: Timestamp = serde_json::from_str("\"2026-01-02T04:54:05+02:00\"").unwrap();
+    assert_eq!(decoded, timestamp);
 }
 
 #[test]
@@ -28,6 +31,9 @@ fn duration_uses_canonical_protojson_string() {
     };
 
     assert_eq!(serde_json::to_string(&duration).unwrap(), "\"3.500s\"");
+
+    let decoded: Duration = serde_json::from_str("\"3.500s\"").unwrap();
+    assert_eq!(decoded, duration);
 }
 
 #[test]
@@ -74,6 +80,11 @@ fn wrapper_types_serialize_as_bare_scalars() {
         .unwrap(),
         "\"aGk=\"",
     );
+
+    let decoded: Int64Value = serde_json::from_str("\"42\"").unwrap();
+    assert_eq!(decoded.value, 42);
+    let decoded: BytesValue = serde_json::from_str("\"aGk=\"").unwrap();
+    assert_eq!(decoded.value, Bytes::from_static(b"hi"));
 }
 
 #[test]
@@ -139,6 +150,28 @@ fn any_uses_protojson_type_url_field_name() {
         serde_json::from_value(serde_json::json!({"@type": any.type_url, "value": "YWJj"}))
             .unwrap();
     assert_eq!(decoded.value, Bytes::from_static(b"abc"));
+}
+
+#[test]
+fn generated_google_protobuf_types_embed_canonical_wkts() {
+    let option = ProtoOption {
+        name: "event".to_owned(),
+        value: Some(Any {
+            type_url: "type.googleapis.com/example.Event".to_owned(),
+            value: Bytes::from_static(b"abc"),
+        }),
+    };
+
+    assert_eq!(
+        serde_json::to_value(&option).unwrap(),
+        serde_json::json!({
+            "name": "event",
+            "value": {
+                "@type": "type.googleapis.com/example.Event",
+                "value": "YWJj",
+            },
+        }),
+    );
 }
 
 #[test]

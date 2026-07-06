@@ -92,8 +92,8 @@ def {{ .Rule.Name }}(name, **kwargs):
         name = name_fixed,
         compilation = name_pb,
         deps = rust_deps,
-        pbjson_wkt_reexports = kwargs.get("_pbjson_wkt_reexports", False),
-        pbjson_wkt_reexports_src = Label("@rules_proto_grpc_rust//google/protobuf:wkt.rs") if kwargs.get("_pbjson_wkt_reexports", False) else None,
+        canonical_wkt_reexports = kwargs.get("_canonical_wkt_reexports", False),
+        canonical_wkt_reexports_src = Label("@rules_proto_grpc_rust//google/protobuf:wkt.rs") if kwargs.get("_canonical_wkt_reexports", False) else None,
     )
 
     rust_proto_crate_root(
@@ -125,7 +125,7 @@ var rustProtoLibraryRuleTemplate = mustTemplate(rustLibraryRuleTemplateString + 
         deps = [crate_label("prost")] +
                [crate_label("pbjson")] +
                [crate_label("serde")] +
-               ([crate_label("pbjson-types")] if kwargs.get("_pbjson_wkt_reexports", False) else []) +
+               ([crate_label("prost-types"), crate_label("serde_json")] if kwargs.get("_canonical_wkt_reexports", False) else []) +
                rust_deps,
         proc_macro_deps = kwargs.get("proc_macro_deps", []) + [
             crate_label("prost-derive"),
@@ -152,7 +152,7 @@ var rustGrpcLibraryRuleTemplate = mustTemplate(rustLibraryRuleTemplateString + `
                [crate_label("pbjson")] +
                [crate_label("serde")] +
                [crate_label("tonic"), crate_label("tonic-prost")] +
-               ([crate_label("pbjson-types")] if kwargs.get("_pbjson_wkt_reexports", False) else []) +
+               ([crate_label("prost-types"), crate_label("serde_json")] if kwargs.get("_canonical_wkt_reexports", False) else []) +
                rust_deps,
         proc_macro_deps = kwargs.get("proc_macro_deps", []) + [
             crate_label("prost-derive"),
@@ -409,7 +409,7 @@ func makeRust() *Language {
 	return &Language{
 		Name:              "rust",
 		DisplayName:       "Rust",
-		Notes:             mustTemplate("Rules for generating Rust protobuf and gRPC ``.rs`` files and libraries. Libraries are created with ``rust_library`` from `rules_rust <https://github.com/bazelbuild/rules_rust>`_. Rust library rules use one public ``deps`` attribute for both generated Rust proto libraries and ordinary Rust crate dependencies. Generated proto dependencies provide package metadata that is converted into Prost ``extern_path`` options; ordinary Rust deps are passed through to ``rust_library`` and ignored for code generation. The legacy ``proto_deps`` attribute is still accepted as a deprecated compatibility alias and is merged into ``deps``.\n\nThe Rust module provides generated wrapper crates for common upstream protos under ``@rules_proto_grpc_rust//google/...``. In particular, ``@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto`` maps ``.google.protobuf`` to ``::google_protobuf::google::protobuf`` and is added implicitly to every ``rust_proto_library`` and ``rust_grpc_library``. Common Google API/type/rpc/longrunning protos should be listed through their generated Rust wrapper targets, for example ``@rules_proto_grpc_rust//google/api:field_behavior_rust_proto``, ``@rules_proto_grpc_rust//google/type:latlng_rust_proto``, or ``@rules_proto_grpc_rust//google/longrunning:operations_rust_proto``.\n\nGenerated Rust proto and gRPC libraries use the ``google_protobuf`` crate for ``google.protobuf`` types. That crate provides canonical ProtoJSON serde for well-known types such as ``Timestamp``, ``Duration``, ``FieldMask``, wrapper values, ``Struct``/``Value``/``ListValue``, and ``Any``. Application code does not need to depend on ``pbjson-types`` directly for well-known-type JSON behavior.\n\nRust library rules run a small post-merge fixup before calling ``rust_library``. The core rules execute each protoc plugin in an isolated action and then merge the plugin output trees. The Rust plugins emit sibling files such as ``foo.rs``, ``foo.serde.rs``, and ``foo.tonic.rs``; Rust does not compile those siblings unless the base module explicitly includes them. The fixup copies the merged tree and appends the required ``include!`` statements so generated serde and gRPC code is part of the crate.\n\nDownstream Rust code that needs to call ``prost`` or ``serde_json`` APIs on generated messages should depend on ``@rules_proto_grpc_rust//rust:proto_runtime``. That public target re-exports the exact ``prost``, ``prost-types``, ``pbjson``, ``pbjson-types``, ``proto-types``, ``serde``, and ``serde_json`` crate instances available from the Rust module, avoiding direct dependencies on the internal ``@rules_proto_grpc_rust_crates`` hub."),
+		Notes:             mustTemplate("Rules for generating Rust protobuf and gRPC ``.rs`` files and libraries. Libraries are created with ``rust_library`` from `rules_rust <https://github.com/bazelbuild/rules_rust>`_. Rust library rules use one public ``deps`` attribute for both generated Rust proto libraries and ordinary Rust crate dependencies. Generated proto dependencies provide package metadata that is converted into Prost ``extern_path`` options; ordinary Rust deps are passed through to ``rust_library`` and ignored for code generation. The legacy ``proto_deps`` attribute is still accepted as a deprecated compatibility alias and is merged into ``deps``.\n\nThe Rust module provides generated wrapper crates for common upstream protos under ``@rules_proto_grpc_rust//google/...``. In particular, ``@rules_proto_grpc_rust//google/protobuf:protobuf_rust_proto`` maps ``.google.protobuf`` to ``::google_protobuf::google::protobuf`` and is added implicitly to every ``rust_proto_library`` and ``rust_grpc_library``. Common Google API/type/rpc/longrunning protos should be listed through their generated Rust wrapper targets, for example ``@rules_proto_grpc_rust//google/api:field_behavior_rust_proto``, ``@rules_proto_grpc_rust//google/type:latlng_rust_proto``, or ``@rules_proto_grpc_rust//google/longrunning:operations_rust_proto``.\n\nGenerated Rust proto and gRPC libraries use the ``google_protobuf`` crate for ``google.protobuf`` types. That crate owns canonical ProtoJSON serde for well-known types such as ``Timestamp``, ``Duration``, ``FieldMask``, wrapper values, ``Struct``/``Value``/``ListValue``, and ``Any`` using local Rust implementations.\n\nRust library rules run a small post-merge fixup before calling ``rust_library``. The core rules execute each protoc plugin in an isolated action and then merge the plugin output trees. The Rust plugins emit sibling files such as ``foo.rs``, ``foo.serde.rs``, and ``foo.tonic.rs``; Rust does not compile those siblings unless the base module explicitly includes them. The fixup copies the merged tree and appends the required ``include!`` statements so generated serde and gRPC code is part of the crate.\n\nDownstream Rust code that needs to call ``prost`` or ``serde_json`` APIs on generated messages should depend on ``@rules_proto_grpc_rust//rust:proto_runtime``. That public target re-exports the exact ``prost``, ``prost-types``, ``pbjson``, ``proto-types``, ``serde``, and ``serde_json`` crate instances available from the Rust module, avoiding direct dependencies on the internal ``@rules_proto_grpc_rust_crates`` hub."),
 		ModuleSuffixLines: `bazel_dep(name = "rules_rust", version = "0.69.0")`,
 		SkipTestPlatforms: []string{"windows"},
 		Rules: []*Rule{
