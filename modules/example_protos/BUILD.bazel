@@ -50,6 +50,13 @@ filegroup(
 )
 
 proto_library(
+    name = "bytes_payload_proto",
+    srcs = ["bytes_payload.proto"],
+    import_prefix = "examples/proto",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
     name = "common_types_proto",
     srcs = ["common_types.proto"],
     import_prefix = "examples/proto",

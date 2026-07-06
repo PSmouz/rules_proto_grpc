@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option go_package = "github.com/rules-proto-grpc/rules_proto_grpc/examples/proto";
+
+package example.bytes;
+
+message BytesPayload {
+    bytes data = 1;
+}

@@ -5,6 +5,7 @@ proto_plugin(
     options = [
         "file_descriptor_set",
         "compile_well_known_types",
+        "bytes=.",
     ],
     output_directory = True,
     separate_options_flag = True,
