@@ -6,6 +6,8 @@ package example.session;
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "google/type/latlng.proto";
 
@@ -19,4 +21,6 @@ message Session {
     google.type.LatLng location = 2;
     google.protobuf.Timestamp created_at = 3;
     google.api.FieldBehavior behavior = 4;
+    google.protobuf.FieldMask mask = 5;
+    google.protobuf.Any payload = 6;
 }

@@ -2,9 +2,12 @@ load("@rules_proto_grpc_rust//:defs.bzl", "rust_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["wkt.rs"])
+
 rust_proto_library(
     name = "protobuf_rust_proto",
     _implicit_protobuf = False,
+    _pbjson_wkt_reexports = True,
     crate_name = "google_protobuf",
     declared_proto_packages = ["google.protobuf"],
     protos = [

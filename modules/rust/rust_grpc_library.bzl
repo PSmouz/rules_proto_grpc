@@ -51,6 +51,8 @@ def rust_grpc_library(name, **kwargs):
         name = name_fixed,
         compilation = name_pb,
         deps = rust_deps,
+        pbjson_wkt_reexports = kwargs.get("_pbjson_wkt_reexports", False),
+        pbjson_wkt_reexports_src = Label("@rules_proto_grpc_rust//google/protobuf:wkt.rs") if kwargs.get("_pbjson_wkt_reexports", False) else None,
     )
 
     rust_proto_crate_root(
@@ -81,6 +83,7 @@ def rust_grpc_library(name, **kwargs):
                [crate_label("pbjson")] +
                [crate_label("serde")] +
                [crate_label("tonic"), crate_label("tonic-prost")] +
+               ([crate_label("pbjson-types")] if kwargs.get("_pbjson_wkt_reexports", False) else []) +
                rust_deps,
         proc_macro_deps = kwargs.get("proc_macro_deps", []) + [
             crate_label("prost-derive"),

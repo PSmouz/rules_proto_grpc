@@ -106,15 +106,25 @@ def _rust_proto_crate_fixer(ctx):
     ]
     in_dir = compilation.output_dirs.to_list()[0]
     out_dir = ctx.actions.declare_directory("%s_fixed" % compilation.label.name)
+    inputs = [in_dir]
+    arguments = [in_dir.path, out_dir.path, "1" if ctx.attr.pbjson_wkt_reexports else "0"]
+
+    if ctx.file.pbjson_wkt_reexports_src:
+        inputs.append(ctx.file.pbjson_wkt_reexports_src)
+        arguments.append(ctx.file.pbjson_wkt_reexports_src.path)
+    else:
+        arguments.append("")
 
     ctx.actions.run_shell(
         outputs = [out_dir],
-        inputs = [in_dir],
-        arguments = [in_dir.path, out_dir.path] + rewrite_specs + ["--"] + keyword_rewrites,
+        inputs = inputs,
+        arguments = arguments + rewrite_specs + ["--"] + keyword_rewrites,
         command = """
 set -eu
 
 out_dir="$2"
+pbjson_wkt_reexports="$3"
+pbjson_wkt_reexports_src="$4"
 
 cp -RL "$1"/. "$2"/
 chmod -R +w "$2"
@@ -129,7 +139,22 @@ find "$2" -type f ! -name 'mod.rs' ! -name '*.serde.rs' ! -name '*.tonic.rs' | w
     done
 done
 
-shift 2
+if [ "$pbjson_wkt_reexports" = "1" ]; then
+    cp "$pbjson_wkt_reexports_src" "$out_dir/wkt.rs"
+    cat > "$out_dir/mod.rs" <<'EOF'
+// @generated
+mod wkt;
+
+pub mod google {
+    pub mod protobuf {
+        pub use pbjson_types::*;
+        pub use crate::wkt::{Any, FieldMask};
+    }
+}
+EOF
+fi
+
+shift 4
 ancestor_specs=""
 while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do
     ancestor_specs="${ancestor_specs}
@@ -196,6 +221,14 @@ rust_proto_crate_fixer = rule(
         ),
         "deps": attr.label_list(
             doc = "Rust dependencies used to repair ancestor-package relative imports.",
+        ),
+        "pbjson_wkt_reexports": attr.bool(
+            doc = "Replace google.protobuf output with pbjson-types canonical WKT re-exports.",
+            default = False,
+        ),
+        "pbjson_wkt_reexports_src": attr.label(
+            doc = "Rust source file containing local canonical WKT replacements.",
+            allow_single_file = True,
         ),
     },
 )

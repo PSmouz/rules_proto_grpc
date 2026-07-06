@@ -70,6 +70,8 @@ proto_library(
         "@googleapis//google/api:field_behavior_proto",
         "@googleapis//google/api:resource_proto",
         "@googleapis//google/type:latlng_proto",
+        "@protobuf//:any_proto",
+        "@protobuf//:field_mask_proto",
         "@protobuf//:timestamp_proto",
     ],
 )
