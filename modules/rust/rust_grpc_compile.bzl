@@ -30,9 +30,9 @@ rust_grpc_compile = rule(
             mandatory = False,
             doc = "Name of the Rust crate these protos will be compiled into later using rust_library.",
         ),
-        declared_proto_types = attr.string_list(
+        proto_files = attr.string_list(
             mandatory = False,
-            doc = "Fully-qualified proto message/enum type names this rule generates. Enables per-type extern_path so one proto package can be split across per-file crates.",
+            doc = "Proto file names (as protoc names them) whose messages/enums this rule generates. Advertised to dependents, which pass them to the generators' `crate_for_file` parameter so one proto package can be split across per-file crates.",
         ),
         _plugins = attr.label_list(
             providers = [ProtoPluginInfo],

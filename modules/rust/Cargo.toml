@@ -26,3 +26,12 @@ tokio = { version = "1.48.0", features = ["macros", "rt", "sync", "time"] }
 tokio-stream = "0.1.17"
 tonic = "0.14.1"
 tonic-prost = "0.14.1"
+
+# The protoc-gen-prost plugin suite is sourced from the scarlet fork, which adds
+# the `crate_for_file` parameter used to split a proto package across one crate
+# per file. See github.com/PSmouz/protoc-gen-prost (branch: scarlet).
+[patch.crates-io]
+protoc-gen-prost = { git = "https://github.com/PSmouz/protoc-gen-prost.git", branch = "scarlet" }
+protoc-gen-prost-crate = { git = "https://github.com/PSmouz/protoc-gen-prost.git", branch = "scarlet" }
+protoc-gen-prost-serde = { git = "https://github.com/PSmouz/protoc-gen-prost.git", branch = "scarlet" }
+protoc-gen-tonic = { git = "https://github.com/PSmouz/protoc-gen-prost.git", branch = "scarlet" }

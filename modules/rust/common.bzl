@@ -8,13 +8,13 @@ RustProtoInfo = provider(
     fields = {
         "crate_name": "Name of the crate that wraps this module.",
         "declared_proto_packages": "All proto packages that this compile rule generates bindings for.",
-        "declared_proto_types": "Fully-qualified proto message/enum type names this crate generates. Used to emit per-type extern_path so a single proto package can be split across several per-file crates.",
+        "proto_files": "Proto file names (as protoc names them) whose messages/enums this crate generates. Dependents pass these to the generators' `crate_for_file` parameter so a proto package can be split across one crate per file. Empty for aggregate crates (e.g. the google.* wrappers) and grpc crates, which own no message types.",
     },
 )
 
 rust_compile_attrs = [
     "declared_proto_packages",
-    "declared_proto_types",
+    "proto_files",
     "crate_name",
     "proto_deps",
     "deps",
@@ -174,64 +174,6 @@ def proto_package_overlaps_declared(package, declared_packages):
 
     return False
 
-def owning_proto_package(type_name, packages):
-    """Returns the longest declared package that is a prefix of type_name.
-
-    Args:
-        type_name: A fully-qualified proto type, e.g. "pkg.Msg.Nested".
-        packages: The candidate declared proto packages of the owning crate.
-
-    Returns:
-        The owning package, or None if none of `packages` is a prefix.
-    """
-    best = None
-    for package in packages:
-        if type_name == package or type_name.startswith(package + "."):
-            if best == None or len(package) > len(best):
-                best = package
-    return best
-
-def to_snake(name):
-    """Approximates prost's message-name-to-module snake_case conversion.
-
-    Nested proto types become modules named after the enclosing message in
-    snake_case (`InstructorProfile` -> `instructor_profile`). A boundary gets an
-    underscore before an uppercase letter that follows a lowercase/digit, or that
-    starts a new word after an acronym (the uppercase is followed by lowercase).
-    """
-    out = []
-    length = len(name)
-    for i in range(length):
-        ch = name[i]
-        if ch.isupper():
-            prev = name[i - 1] if i > 0 else ""
-            nxt = name[i + 1] if i + 1 < length else ""
-            boundary = i > 0 and (prev.islower() or prev.isdigit() or (prev.isupper() and nxt.islower()))
-            if boundary:
-                out.append("_")
-            out.append(ch.lower())
-        else:
-            out.append(ch)
-    return "".join(out)
-
-def rust_extern_type_path(type_name, owner_package, escaped):
-    """Builds the Rust module path for a proto type owned by another crate.
-
-    Segments after the owning package are message nesting: all but the final type
-    name become snake_case modules, matching prost's generated layout. `escaped`
-    raw-identifier-escapes keyword segments for generators (tonic) that parse
-    their own output; prost and pbjson want the raw path and the crate fixer
-    escapes their output afterwards.
-    """
-    segments = owner_package.split(".")
-    nesting = type_name[len(owner_package) + 1:].split(".")
-    for parent in nesting[:-1]:
-        segments.append(to_snake(parent))
-    segments.append(nesting[-1])
-    if escaped:
-        segments = [rust_identifier_path_segment(segment) for segment in segments]
-    return "::".join(segments)
-
 def rust_plugin_enabled(ctx, plugin_name):
     """Returns whether a Rust protoc plugin is enabled on this compile rule."""
     for plugin in getattr(ctx.attr, "_plugins", []):
@@ -280,10 +222,11 @@ rust_proto_library_forward = rule(
 def rust_proto_compile_impl(ctx):
     """Implements Rust proto and gRPC compile rules.
 
-    Rust dependencies are crate-scoped, while proto dependencies are
-    package-scoped. This implementation converts `proto_deps` metadata into
-    `extern_path` options for the Rust protobuf plugin so generated code can
-    refer to types from dependent Rust crates.
+    Rust dependencies are crate-scoped while proto types are package-scoped, and
+    a package may be split across one crate per file. This turns each dependency's
+    `RustProtoInfo` into `crate_for_file` options (or, for aggregate crates, a
+    whole-package `extern_path`) so the generators reference dependency types
+    through the crate that owns them instead of regenerating them.
 
     Args:
         ctx: Rule context.
@@ -291,68 +234,47 @@ def rust_proto_compile_impl(ctx):
     Returns:
         The providers returned by `proto_compile` plus `RustProtoInfo`.
     """
-    # extern_path teaches prost/tonic/serde how to NAME a dependency's types.
-    # Keyword path segments (a proto package like `match` or `type`) need raw
-    # identifiers (`r#match`) to be valid Rust. prost and pbjson want the RAW path
-    # and mangle a pre-escaped `r#` into `r_`; the crate fixer rewrites their
-    # `::match::` output to `::r#match::` afterwards. tonic instead parses its own
-    # output during codegen, so it must receive already-escaped paths. Hence two
-    # forms: raw for prost/serde, escaped for tonic.
+    # A first-party proto package is compiled as one crate per file, so the
+    # package as a whole does not map to a single crate. `crate_for_file` tells
+    # the prost / serde / tonic generators which crate owns each dependency proto
+    # file; the generators read that file's types from the descriptor and extern
+    # them (and, for serde, exclude them) using prost's own module and type
+    # naming. It is a single identical opt per file across all three plugins.
+    #
+    # Aggregate dependencies that own a whole package in one crate (the vendored
+    # google.* wrappers) advertise no `proto_files`; they fall back to a
+    # whole-package `extern_path`. Keyword segments (`match`, `type`) need raw
+    # identifiers: prost and pbjson take the raw path (the crate fixer rewrites
+    # `::match::` to `::r#match::` afterwards) while tonic parses its own output
+    # and needs it pre-escaped -- hence a raw and an escaped form.
+    crate_for_file = []
     externs = []
     grpc_externs = []
-
-    # Only the prost message plugin also SKIPS regenerating externed types. pbjson
-    # (serde) generates a serde impl for every type in the included packages --
-    # including a sibling crate's types that live in a package this crate also
-    # declares -- which orphan-conflicts with the impl in the owning crate.
-    # `exclude` (a segment-prefix filter, so it also covers nested types) tells
-    # pbjson not to regenerate serde for externed types.
     serde_excludes = []
     rust_deps = []
     rust_deps.extend(getattr(ctx.attr, "deps", []))
     rust_deps.extend(getattr(ctx.attr, "proto_deps", []))
 
     declared_packages = ctx.attr.declared_proto_packages
-    local_types = {t: True for t in getattr(ctx.attr, "declared_proto_types", [])}
+    seen_files = {}
     seen_packages = {}
-    seen_types = {}
     for dep in rust_deps:
         if RustProtoInfo not in dep:
             continue
 
         proto_info = dep[RustProtoInfo]
         dep_crate = proto_info.crate_name
-        dep_types = getattr(proto_info, "declared_proto_types", [])
+        dep_files = getattr(proto_info, "proto_files", [])
 
-        if dep_types:
-            # Per-type extern. A first-party proto package is split across one
-            # crate per file, so the package as a whole does not map to a single
-            # crate: every type must be externed to the specific crate that owns
-            # it. This is required both for sibling files in a package this crate
-            # also declares AND for imported packages that are themselves split.
-            # Skipping this crate's own types leaves them to be generated locally.
-            for type_name in dep_types:
-                if type_name in local_types or type_name in seen_types:
+        if dep_files:
+            for proto_file in dep_files:
+                if proto_file in seen_files:
                     continue
-                owner_package = owning_proto_package(type_name, proto_info.declared_proto_packages)
-                if owner_package == None:
-                    continue
-                seen_types[type_name] = True
-                externs.append("extern_path=.{}=::{}::{}".format(
-                    type_name,
-                    dep_crate,
-                    rust_extern_type_path(type_name, owner_package, False),
-                ))
-                grpc_externs.append("extern_path=.{}=::{}::{}".format(
-                    type_name,
-                    dep_crate,
-                    rust_extern_type_path(type_name, owner_package, True),
-                ))
-                serde_excludes.append("exclude=." + type_name)
+                seen_files[proto_file] = True
+                crate_for_file.append("crate_for_file={}={}".format(proto_file, dep_crate))
         else:
-            # Whole-package extern fallback for single-crate dependencies that do
-            # not enumerate their types (e.g. the vendored google.* wrappers,
-            # whose packages never overlap first-party ones).
+            # Whole-package extern fallback for single-crate dependencies whose
+            # packages never overlap first-party ones (e.g. the google.* wrappers).
             for package in proto_info.declared_proto_packages:
                 if proto_package_overlaps_declared(package, declared_packages):
                     continue
@@ -376,11 +298,11 @@ def rust_proto_compile_impl(ctx):
     serde_plugin = "@rules_proto_grpc_rust//:rust_serde_plugin"
     grpc_plugin = "@rules_proto_grpc_rust//:rust_grpc_plugin"
     if rust_plugin_enabled(ctx, "rust_proto_plugin"):
-        options[proto_plugin] = options.get(proto_plugin, []) + externs
+        options[proto_plugin] = options.get(proto_plugin, []) + externs + crate_for_file
     if rust_plugin_enabled(ctx, "rust_serde_plugin"):
-        options[serde_plugin] = options.get(serde_plugin, []) + externs + serde_excludes
+        options[serde_plugin] = options.get(serde_plugin, []) + externs + serde_excludes + crate_for_file
     if rust_plugin_enabled(ctx, "rust_grpc_plugin"):
-        options[grpc_plugin] = options.get(grpc_plugin, []) + grpc_externs
+        options[grpc_plugin] = options.get(grpc_plugin, []) + grpc_externs + crate_for_file
 
     compile_result = proto_compile(
         ctx,
@@ -391,6 +313,6 @@ def rust_proto_compile_impl(ctx):
 
     return compile_result + [RustProtoInfo(
         declared_proto_packages = ctx.attr.declared_proto_packages,
-        declared_proto_types = getattr(ctx.attr, "declared_proto_types", []),
+        proto_files = getattr(ctx.attr, "proto_files", []),
         crate_name = ctx.attr.crate_name or ctx.attr.name,
     )]

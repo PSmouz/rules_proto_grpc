@@ -1038,9 +1038,9 @@ dependencies = [
 [[package]]
 name = "protoc-gen-prost"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4018e7b5e3a213d241d79a0ef43a442a17dc23dcdd5b81b0c42b2549197897fd"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
 dependencies = [
+ "heck",
  "once_cell",
  "prost",
  "prost-build",
@@ -1051,8 +1051,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-prost-crate"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "976e131fb877449cf94a3255f11ca4883f798b7d8f60e1f8e56fec9dd385185a"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
 dependencies = [
  "once_cell",
  "prost",
@@ -1065,8 +1064,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-prost-serde"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1f79a2bf9d1798f9edffd669f4f26e01f3395f2791b2db02717b87f7388a4cc"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
 dependencies = [
  "pbjson-build",
  "prost",
@@ -1079,8 +1077,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-tonic"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa40faad46fb55e5c4a3257461c43f6ed0f87b320d11d98b4ea397f6f45896be"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
 dependencies = [
  "heck",
  "prettyplease",
