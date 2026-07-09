@@ -1,6 +1,8 @@
 """Common support for rules_proto_grpc Rust rules."""
 
+load("@protobuf//bazel/common:proto_info.bzl", "ProtoInfo")
 load("@rules_proto_grpc//:defs.bzl", "proto_compile")
+load("@rules_proto_grpc//internal:common.bzl", "descriptor_proto_path")
 load("@rules_rust//rust:defs.bzl", "rust_common")
 
 RustProtoInfo = provider(
@@ -14,7 +16,6 @@ RustProtoInfo = provider(
 
 rust_compile_attrs = [
     "declared_proto_packages",
-    "proto_files",
     "crate_name",
     "proto_deps",
     "deps",
@@ -182,6 +183,23 @@ def rust_plugin_enabled(ctx, plugin_name):
 
     return False
 
+def owned_proto_files(ctx):
+    """Returns the proto file names (as protoc names them) this crate owns.
+
+    Derived from `protos` rather than a separate attribute -- `descriptor_proto_path`
+    yields exactly the name the generators match against, including for external
+    protos (e.g. @googleapis). A grpc compile generates only service stubs and
+    owns no message types, so it advertises nothing for dependents to extern.
+    """
+    if rust_plugin_enabled(ctx, "rust_grpc_plugin"):
+        return []
+    files = []
+    for proto in ctx.attr.protos:
+        proto_info = proto[ProtoInfo]
+        for src in proto_info.direct_sources:
+            files.append(descriptor_proto_path(src, proto_info))
+    return files
+
 def rust_proto_library_forward_impl(ctx):
     """Forwards a generated rust_library while adding RustProtoInfo.
 
@@ -313,6 +331,6 @@ def rust_proto_compile_impl(ctx):
 
     return compile_result + [RustProtoInfo(
         declared_proto_packages = ctx.attr.declared_proto_packages,
-        proto_files = getattr(ctx.attr, "proto_files", []),
+        proto_files = owned_proto_files(ctx),
         crate_name = ctx.attr.crate_name or ctx.attr.name,
     )]
