@@ -1038,7 +1038,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-prost"
 version = "0.5.0"
-source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#4a39a2bc25600a8ce36e522eca72970c0bf536a5"
 dependencies = [
  "heck",
  "once_cell",
@@ -1051,7 +1051,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-prost-crate"
 version = "0.5.0"
-source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#4a39a2bc25600a8ce36e522eca72970c0bf536a5"
 dependencies = [
  "once_cell",
  "prost",
@@ -1064,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-prost-serde"
 version = "0.4.0"
-source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#4a39a2bc25600a8ce36e522eca72970c0bf536a5"
 dependencies = [
  "pbjson-build",
  "prost",
@@ -1077,7 +1077,7 @@ dependencies = [
 [[package]]
 name = "protoc-gen-tonic"
 version = "0.5.0"
-source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#f9a503c8743d62466f43921a7caf78095ab577f3"
+source = "git+https://github.com/PSmouz/protoc-gen-prost.git?branch=scarlet#4a39a2bc25600a8ce36e522eca72970c0bf536a5"
 dependencies = [
  "heck",
  "prettyplease",
