@@ -1,4 +1,4 @@
-bazel_dep(name = "grpc", version = "1.81.1")
+bazel_dep(name = "grpc", version = "1.82.1")
 bazel_dep(name = "protobuf", version = "35.1")
 bazel_dep(name = "rules_proto_grpc", version = "0.0.0.rpg.version.placeholder")
 bazel_dep(name = "rules_python", version = "2.1.0")
@@ -12,7 +12,8 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
-# grpc 1.81.1 still contains Bazel 9-incompatible native C++ rule calls in
+# grpc 1.82.1 uses protobuf's renamed upb_c_proto_library API and still contains
+# Bazel 9-incompatible native C++ rule calls in
 # BUILD/Starlark files. Patch those external declarations at fetch time while
 # keeping the registry module version stable.
 single_version_override(
@@ -45,7 +46,7 @@ for path in list(Path(".").rglob("BUILD")) + list(Path(".").rglob("BUILD.bazel")
 GRPC_BAZEL9_PATCH
         """,
     ],
-    version = "1.81.1",
+    version = "1.82.1",
 )
 
 single_version_override(
